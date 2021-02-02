@@ -16,6 +16,7 @@
 """
 
 import argparse
+import re
 
 try:
     import ConfigParser
@@ -163,11 +164,31 @@ def update_repo(reponame):
             'The indicated working directory is not a valid git '
             'repository: %s' % reponame)
 
+    """
+    Find renames from git directly. Trick here as pygit2 does not show renames (at least easily). 
+    Should before pygit2 as pygit2 indexes repo.  
+    
+    See: https://git-scm.com/docs/git-status#_porcelain_format_version_1
+    """
+    run_cmd("git add .".split(" "))
+    status, out = run_cmd("git status --find-renames --porcelain -z".split(" "))
+    run_cmd("git reset -q".split(" "))
+
     index = repo.index
     dopush = False
     origin = None
-
     index = repo.index
+
+    # Process renames for saving history
+    rename_re = re.compile("R  ([^\0]+?\0)([^\0]+?)\0")
+    for m in rename_re.findall(out):
+        msg = 'Move/modify file %s -> %s' % (m[1], m[0])
+        LOG.info(msg)
+        index.remove(m[1])
+        index.add(m[0])
+        dopush = True
+        docommit(repo, index, msg)
+
     # Add or remove to staging the files according to their status
     if repo.status:
         status = repo.status()
