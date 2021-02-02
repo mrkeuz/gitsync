@@ -142,8 +142,9 @@ def docommit(repo, index, msg):
         int(time.time()),
         0)
     LOG.info('Doing commit: %s' % msg)
+    branch = run_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])[1]
     sha = repo.create_commit(
-        'refs/heads/master', committer, committer, msg, tree, [head.hex])
+        'refs/heads/%s' % branch, committer, committer, msg, tree, [head.hex])
     commit = repo[sha]
     return commit
 
