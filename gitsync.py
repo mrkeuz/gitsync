@@ -16,6 +16,7 @@
 """
 
 import argparse
+
 try:
     import ConfigParser
 except ImportError:
@@ -27,7 +28,6 @@ import subprocess
 import threading
 import time
 
-import watchdog
 import watchdog.events
 from watchdog.observers import Observer
 
@@ -35,9 +35,7 @@ from pygit2 import Repository, Signature, Commit
 from pygit2 import (GIT_STATUS_WT_NEW, GIT_STATUS_WT_DELETED,
                     GIT_STATUS_WT_MODIFIED)
 
-
 __version__ = '1.1.0'
-
 
 # Initial simple logging stuff
 logging.basicConfig()
@@ -56,9 +54,9 @@ WAIT_N = 10
 
 
 def get_arguments():
-    ''' Set the command line parser and retrieve the arguments provided
+    """ Set the command line parser and retrieve the arguments provided
     by the command line.
-    '''
+    """
     parser = argparse.ArgumentParser(
         description='gitsync')
     parser.add_argument(
@@ -102,14 +100,8 @@ def run_pull_rebase(repo_path):
     os.chdir(repo_path)
     run_cmd(['git', 'fetch'])
     branch = run_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])[1]
-    lcl_hash = run_cmd(
-        ['git', 'log', '-1', '--pretty=oneline', branch]
-    )[1].split(' ')[0]
-    remote_hash = run_cmd(
-        ['git', 'log', '-1', '--pretty=oneline', 'origin', branch]
-    )[1].split(' ')[0]
-
-    if lcl_hash != remote_hash:
+    no_fast_forward = run_cmd(f"git merge-base --is-ancestor origin/{branch} {branch}".split(" "))[0]
+    if no_fast_forward:
         run_cmd(['git', 'stash'])
         outcode_pull = run_cmd(['git', 'pull', '--rebase'])[0]
         run_cmd(['git', 'stash', 'pop'])
@@ -176,7 +168,7 @@ def update_repo(reponame):
     origin = None
 
     index = repo.index
-    ## Add or remove to staging the files according to their status
+    # Add or remove to staging the files according to their status
     if repo.status:
         status = repo.status()
         for filepath, flag in status.items():
@@ -251,7 +243,6 @@ class GitSyncEventHandler(watchdog.events.FileSystemEventHandler):
         self.log.debug('on_deleted')
         self.log.debug(event)
 
-
         update_repo(self.repo.workdir)
 
     def on_modified(self, event):
@@ -286,12 +277,13 @@ class GitSync(object):
                 'No git repository set in %s' % configfile)
 
         def update_sync_repo(repo):
-            ''' Local, internal method used to do the initial sync of the
+            """
+            Local, internal method used to do the initial sync of the
             repo in daemon mode, or the sync in single-run mode.
-            '''
+            """
             run_pull_rebase(repo)
             dopush = update_repo(os.path.expanduser(repo))
-            ## if there is a remote, push to it
+            # if there is a remote, push to it
             if dopush and not os.path.exists(OFFLINE_FILE):
                 run_pull_rebase(repo)
                 run_push(repo)
