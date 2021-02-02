@@ -21,7 +21,6 @@ try:
 except ImportError:
     # PY3
     import configparser as ConfigParser
-import datetime
 import logging
 import os
 import subprocess
@@ -143,7 +142,7 @@ def docommit(repo, index, msg):
     committer = Signature(
         'gitsync',
         'root@localhost',
-        int(datetime.datetime.utcnow().strftime('%s')),
+        int(time.time()),
         0)
     LOG.info('Doing commit: %s' % msg)
     sha = repo.create_commit(
