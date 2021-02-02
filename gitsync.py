@@ -15,6 +15,7 @@
 # license.
 """
 
+import socket
 import argparse
 import re
 
@@ -52,6 +53,9 @@ OFFLINE_FILE = os.path.join(
 
 # Five seconds of sleep before pushing.
 WAIT_N = 10
+
+HOSTNAME = socket.gethostname()
+USER = os.path.split(os.path.expanduser('~'))[-1]
 
 
 def get_arguments():
@@ -134,7 +138,7 @@ def docommit(repo, index, msg):
     commit = repo[head.oid]
     committer = Signature(
         'gitsync',
-        'root@localhost',
+        '%s@%s' % (USER, HOSTNAME),
         int(time.time()),
         0)
     LOG.info('Doing commit: %s' % msg)
