@@ -101,6 +101,7 @@ def run_pull_rebase(repo_path):
     """ Run the git pull --rebase command and react accordingly to the
     success of the task.
     """
+    LOG.info("Pull and rebase: %s" % repo_path)
     cwd = os.getcwd()
     os.chdir(repo_path)
     run_cmd(['git', 'fetch'])
@@ -149,7 +150,7 @@ def docommit(repo, index, msg):
     return commit
 
 
-def update_repo(reponame):
+def update_repo(reponame) -> bool:
     """ For a given path to a repo, pull/rebase the last changes if
     it can, add/remove/commit the new changes and push them to the
     remote repo if any.
@@ -317,6 +318,7 @@ class GitSync(object):
         self.observers = []
         if not daemon:
             for repo in self.settings.work_dir.split(','):
+                LOG.info("Instant sync repo (no --daemon mode): %s" % repo)
                 repo = repo.strip()
                 if repo:
                     update_sync_repo(repo)
